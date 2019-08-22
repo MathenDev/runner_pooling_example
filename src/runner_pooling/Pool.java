@@ -6,46 +6,45 @@ import java.util.Queue;
 
 public class Pool {
 
-	public final int limit;
+	public final int size;
 
-	private Queue<Runner> freeThreads;
-	private List<Runner> busyThreads;
+	private Queue<Runner> freeRunners;
+	private List<Runner> busyRunners;
 
-	public Pool(int limit) {
+	public Pool(int size) {
 		super();
-		this.limit = limit;
-		freeThreads = new LinkedList<>();
-		busyThreads = new LinkedList<>();
+		this.size = size;
+		freeRunners = new LinkedList<>();
+		busyRunners = new LinkedList<>();
 	}
 
-	public void init() throws InterruptedException {
-		for (int i = 0; i < limit; i++)
-			freeThreads.offer(new Runner(this));
-		for (Runnable runnable : freeThreads) {
+	public void init() {
+		for (int i = 0; i < size; i++)
+			freeRunners.offer(new Runner(this));
+		for (Runnable runnable : freeRunners) {
 			new Thread(runnable).start();
 		}
-		Thread.sleep(10);
 	}
 
-	synchronized void setFree(Runner runnableImpl) {
+	synchronized void setFree(Runner runner) {
 		boolean removed;
-		synchronized (busyThreads) {
-			removed = busyThreads.remove(runnableImpl);
+		synchronized (busyRunners) {
+			removed = busyRunners.remove(runner);
 		}
 		if (removed)
-			synchronized (freeThreads) {
-				freeThreads.offer(runnableImpl);
+			synchronized (freeRunners) {
+				freeRunners.offer(runner);
 			}
 	}
 
 	public boolean assignTask(Task task) {
-		synchronized (freeThreads) {
-			if (freeThreads.isEmpty())
+		synchronized (freeRunners) {
+			if (freeRunners.isEmpty())
 				return false;
-			synchronized (busyThreads) {
-				Runner r = freeThreads.poll();
-				r.notify(task);
-				busyThreads.add(r);
+			synchronized (busyRunners) {
+				Runner r = freeRunners.poll();
+				r.yield(task);
+				busyRunners.add(r);
 			}
 		}
 		return true;

@@ -11,7 +11,7 @@ class Runner implements Runnable {
 		this.pool = pool;
 	}
 
-	void notify(Task task) {
+	void yield(Task task) {
 		synchronized (this) {
 			this.task = task;
 			this.notify();
