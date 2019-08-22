@@ -38,15 +38,16 @@ public class Pool {
 	}
 
 	public boolean assignTask(Task task) {
+		Runner r;
 		synchronized (freeRunners) {
-			if (freeRunners.isEmpty())
-				return false;
-			synchronized (busyRunners) {
-				Runner r = freeRunners.poll();
-				r.yield(task);
-				busyRunners.add(r);
-			}
+			r = freeRunners.poll();
 		}
+		if (r == null)
+			return false;
+		synchronized (busyRunners) {
+			busyRunners.add(r);
+		}
+		r.yield(task);
 		return true;
 	}
 
